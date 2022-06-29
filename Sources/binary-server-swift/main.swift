@@ -15,34 +15,34 @@ let binaryRootDirectory = URL(fileURLWithPath: app.directory.workingDirectory).a
 
 app.routes.defaultMaxBodySize = "3gb"
 app.post("frameworks") { req -> Response in
-    let component = try req.content.decode(Component.self)
+    let framework = try req.content.decode(Framework.self)
     
-    if let _ = try await req.componentCollection.findOne(["name": .string(component.name),
-                                                  "version": .string(component.version)]) {
-        return Response(status: .conflict, body: Response.Body(string: "二进制文件已存在 \(component.name) (\(component.version))\n"))
+    if let _ = try await req.framework.findOne(["name": .string(framework.name),
+                                                  "version": .string(framework.version)]) {
+        return Response(status: .conflict, body: Response.Body(string: "二进制文件已存在 \(framework.name) (\(framework.version))\n"))
     }
     
-    try await req.componentCollection.insertOne(component.mongo())
+    try await req.framework.insertOne(framework.mongo())
     
     
     
-    let binaryDirectory = binaryRootDirectory.appendingPathComponent(component.name).appendingPathComponent(component.version)
+    let binaryDirectory = binaryRootDirectory.appendingPathComponent(framework.name).appendingPathComponent(framework.version)
     if !FileManager.default.fileExists(atPath: binaryDirectory.path) {
         try FileManager.default.createDirectory(at: binaryDirectory, withIntermediateDirectories: true)
     }
-    guard let file = component.file else {
+    guard let file = framework.file else {
         return Response(status: .badRequest, body: "没有上传文件\n")
     }
     
     
     let data = Data(buffer: file.data)
     let md5 = Insecure.MD5.hash(data: data).hexEncodedString()
-    guard component.md5 == nil || component.md5 == md5 else {
+    guard framework.md5 == nil || framework.md5 == md5 else {
         return Response(status: .badRequest, body: Response.Body(string: "md5值不符 \(md5)\n"))
     }
     
     let sha = Insecure.SHA1.hash(data: data).hexEncodedString()
-    guard component.sha == nil || component.sha == sha else {
+    guard framework.sha == nil || framework.sha == sha else {
         return Response(status: .badRequest, body: Response.Body(string: "sha值不符 \(sha)\n"))
     }
     
@@ -50,7 +50,7 @@ app.post("frameworks") { req -> Response in
     let path = binaryDirectory.appendingPathComponent(file.filename).path
     try await req.fileio.writeFile(file.data, at: path)
     
-    return Response(status: .created, body: Response.Body(string: "保存成功 \(component.name) (\(component.version))\n"))
+    return Response(status: .created, body: Response.Body(string: "保存成功 \(framework.name) (\(framework.version))\n"))
 }
 
 app.get("") { req -> String in
@@ -76,12 +76,12 @@ app.get("frameworks", ":name", ":version") { req -> String in
             filter = ["name": .array(names)]
         }
     }
-    let components = try await req.componentCollection.find(filter).toArray()
+    let frameworks = try await req.framework.find(filter).toArray()
     
     var dict = [String: [String]]()
-    components.forEach { component in
-        dict[component.name] = dict[component.name] ?? []
-        dict[component.name]?.append(component.version)
+    frameworks.forEach { framework in
+        dict[framework.name] = dict[framework.name] ?? []
+        dict[framework.name]?.append(framework.version)
     }
     let jsonData = try JSONSerialization.data(withJSONObject: dict)
     let jsonStr = String(data: jsonData, encoding: .utf8) ?? "{}"
@@ -96,7 +96,7 @@ app.get("frameworks", ":name", ":version", "zip") { req -> Response in
         return Response(status: .badRequest, body: "")
     }
     
-    if try await req.componentCollection.findOne(["name": .string(name),
+    if try await req.framework.findOne(["name": .string(name),
                                                   "version": .string(version)]) == nil {
         return Response(status: .notFound, body: Response.Body(string: "无二进制文件 \(name) (\(version))\n"))
     }
@@ -123,12 +123,12 @@ app.delete("frameworks", ":name", ":version") { req -> Response in
         return Response(status: .badRequest, body: "")
     }
     
-    if try await req.componentCollection.findOne(["name": .string(name),
+    if try await req.framework.findOne(["name": .string(name),
                                                   "version": .string(version)]) == nil {
         return Response(status: .notFound, body: Response.Body(string: "无二进制文件 \(name) (\(version))\n"))
     }
     
-    try await req.componentCollection.deleteOne(["name": .string(name),
+    try await req.framework.deleteOne(["name": .string(name),
                                                  "version": .string(version)])
     
     
@@ -144,7 +144,7 @@ app.delete("frameworks", ":name", ":version") { req -> Response in
 try app.run()
 
 extension Request {
-    var componentCollection: MongoCollection<Component> {
-        application.mongoDB.client.db("binary_database").collection("components", withType: Component.self)
+    var framework: MongoCollection<Framework> {
+        application.mongoDB.client.db("binary_database").collection("components", withType: Framework.self)
     }
 }
