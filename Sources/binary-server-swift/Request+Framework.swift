@@ -17,7 +17,7 @@ extension Request {
         let framework = try content.decode(Framework.self)
         
         if try await frameworkCollection.contains(framework) {
-            return Response(status: .conflict, body: Response.Body(string: "二进制文件已存在 \(framework.name) (\(framework.version))\n"))
+            return .conflict(message: .fileAlreadyExists, other: "\(framework.name) (\(framework.version))")
         }
         
         try await frameworkCollection.insertOne(framework.mongo())
@@ -29,22 +29,22 @@ extension Request {
             try FileManager.default.createDirectory(at: binaryDirectory, withIntermediateDirectories: true)
         }
         guard let file = framework.file else {
-            return Response(status: .badRequest, body: "没有上传文件\n")
+            return .badRequest(message: .notFoundFileInBody)
         }
         
         guard framework.isMD5Validated else {
-            return Response(status: .badRequest, body: Response.Body(string: "md5值不符\n"))
+            return .badRequest(message: .notMD5Validated)
         }
         
         guard framework.isSHAValidated else {
-            return Response(status: .badRequest, body: Response.Body(string: "sha值不符\n"))
+            return .badRequest(message: .notSHAValidated)
         }
         
         
         let path = binaryDirectory.appendingPathComponent(file.filename).path
         try await fileio.writeFile(file.data, at: path)
         
-        return Response(status: .created, body: Response.Body(string: "保存成功 \(framework.name) (\(framework.version))\n"))
+        return .created(message: .createSuccess, other: "\(framework.name) (\(framework.version))")
     }
     
     func findFrameworks() async throws -> [Framework] {
@@ -66,16 +66,16 @@ extension Request {
             let name = parameters.get("name"),
             let version = parameters.get("version")
         else {
-            return Response(status: .badRequest, body: "")
+            return .badRequest(message: .missingParameters)
         }
         
         if try await !frameworkCollection.contains(name: name, version: version) {
-            return Response(status: .notFound, body: Response.Body(string: "无二进制文件 \(name) (\(version))\n"))
+            return .notFound(message: .notFoundFileInDatabase, other: "\(name) (\(version))")
         }
         
         let binaryDirectory = binaryRootDirectory.appendingPathComponent(name).appendingPathComponent(version)
         guard let file = try FileManager.default.contentsOfDirectory(atPath: binaryDirectory.path).first else {
-            return Response(status: .notFound, body: Response.Body(string: "无二进制文件 \(name) (\(version))\n"))
+            return .notFound(message: .notFoundFileOnDisk, other: "\(name) (\(version))")
         }
         
         let path = binaryDirectory.appendingPathComponent(file).path
@@ -88,11 +88,11 @@ extension Request {
             let name = parameters.get("name"),
             let version = parameters.get("version")
         else {
-            return Response(status: .badRequest, body: "")
+            return .badRequest(message: .missingParameters)
         }
         
         if try await !frameworkCollection.contains(name: name, version: version) {
-            return Response(status: .notFound, body: Response.Body(string: "无二进制文件 \(name) (\(version))\n"))
+            return .notFound(message: .notFoundFileInDatabase, other: "\(name) (\(version))")
         }
         
         try await frameworkCollection.deleteOne(["name": .string(name),
@@ -105,6 +105,6 @@ extension Request {
             try FileManager.default.removeItem(at: binaryDirectory)
         }
         
-        return Response(status: .ok, body: Response.Body(string: "删除成功 \(name) (\(version))\n"))
+        return .ok(message: .deleteSuccess, other: "\(name) (\(version))")
     }
 }
