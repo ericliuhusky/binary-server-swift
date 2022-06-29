@@ -11,8 +11,6 @@ defer {
     app.shutdown()
 }
 
-let binaryRootDirectory = URL(fileURLWithPath: app.directory.workingDirectory).appendingPathComponent(".binary")
-
 app.routes.defaultMaxBodySize = "3gb"
 app.post("frameworks") { req in
     try await req.addFramework()

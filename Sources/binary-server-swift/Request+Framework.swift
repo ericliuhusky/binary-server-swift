@@ -23,10 +23,9 @@ extension Request {
         try await frameworkCollection.insertOne(framework.mongo())
         
         
-        
-        let binaryDirectory = binaryRootDirectory.appendingPathComponent(framework.name).appendingPathComponent(framework.version)
-        if !FileManager.default.fileExists(atPath: binaryDirectory.path) {
-            try FileManager.default.createDirectory(at: binaryDirectory, withIntermediateDirectories: true)
+        let directory = app.directory.directory(framework)
+        if !FileManager.default.fileExists(atPath: directory) {
+            try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true)
         }
         guard let file = framework.file else {
             return .badRequest(message: .notFoundFileInBody)
@@ -41,7 +40,7 @@ extension Request {
         }
         
         
-        let path = binaryDirectory.appendingPathComponent(file.filename).path
+        let path = app.directory.directory(framework, filename: file.filename)
         try await fileio.writeFile(file.data, at: path)
         
         return .created(message: .createSuccess, other: "\(framework.name) (\(framework.version))")
@@ -73,12 +72,12 @@ extension Request {
             return .notFound(message: .notFoundFileInDatabase, other: "\(name) (\(version))")
         }
         
-        let binaryDirectory = binaryRootDirectory.appendingPathComponent(name).appendingPathComponent(version)
-        guard let file = try FileManager.default.contentsOfDirectory(atPath: binaryDirectory.path).first else {
+        let directory = app.directory.directory(name: name, version: version)
+        guard let file = try FileManager.default.contentsOfDirectory(atPath: directory).first else {
             return .notFound(message: .notFoundFileOnDisk, other: "\(name) (\(version))")
         }
         
-        let path = binaryDirectory.appendingPathComponent(file).path
+        let path = app.directory.directory(name: name, version: version, filename: file)
         
         return fileio.streamFile(at: path)
     }
@@ -96,13 +95,13 @@ extension Request {
         }
         
         try await frameworkCollection.deleteOne(["name": .string(name),
-                                                     "version": .string(version)])
+                                                 "version": .string(version)])
         
         
-        let binaryDirectory = binaryRootDirectory.appendingPathComponent(name).appendingPathComponent(version)
+        let directory = app.directory.directory(name: name, version: version)
         
-        if FileManager.default.fileExists(atPath: binaryDirectory.path) {
-            try FileManager.default.removeItem(at: binaryDirectory)
+        if FileManager.default.fileExists(atPath: directory) {
+            try FileManager.default.removeItem(atPath: directory)
         }
         
         return .ok(message: .deleteSuccess, other: "\(name) (\(version))")
