@@ -17,11 +17,11 @@ app.routes.defaultMaxBodySize = "3gb"
 app.post("frameworks") { req -> Response in
     let framework = try req.content.decode(Framework.self)
     
-    if try await req.framework.contains(framework) {
+    if try await req.frameworkCollection.contains(framework) {
         return Response(status: .conflict, body: Response.Body(string: "二进制文件已存在 \(framework.name) (\(framework.version))\n"))
     }
     
-    try await req.framework.insertOne(framework.mongo())
+    try await req.frameworkCollection.insertOne(framework.mongo())
     
     
     
@@ -71,7 +71,7 @@ app.get("frameworks", ":name", ":version") { req -> String in
             filter = ["name": .array(names)]
         }
     }
-    let frameworks = try await req.framework.find(filter).toArray()
+    let frameworks = try await req.frameworkCollection.find(filter).toArray()
     
     var dict = [String: [String]]()
     frameworks.forEach { framework in
@@ -91,7 +91,7 @@ app.get("frameworks", ":name", ":version", "zip") { req -> Response in
         return Response(status: .badRequest, body: "")
     }
     
-    if try await !req.framework.contains(name: name, version: version) {
+    if try await !req.frameworkCollection.contains(name: name, version: version) {
         return Response(status: .notFound, body: Response.Body(string: "无二进制文件 \(name) (\(version))\n"))
     }
     
@@ -117,11 +117,11 @@ app.delete("frameworks", ":name", ":version") { req -> Response in
         return Response(status: .badRequest, body: "")
     }
     
-    if try await !req.framework.contains(name: name, version: version) {
+    if try await !req.frameworkCollection.contains(name: name, version: version) {
         return Response(status: .notFound, body: Response.Body(string: "无二进制文件 \(name) (\(version))\n"))
     }
     
-    try await req.framework.deleteOne(["name": .string(name),
+    try await req.frameworkCollection.deleteOne(["name": .string(name),
                                                  "version": .string(version)])
     
     
@@ -137,7 +137,7 @@ app.delete("frameworks", ":name", ":version") { req -> Response in
 try app.run()
 
 extension Request {
-    var framework: MongoCollection<Framework> {
+    var frameworkCollection: MongoCollection<Framework> {
         application.mongoDB.client.db("binary_database").collection("components", withType: Framework.self)
     }
 }
