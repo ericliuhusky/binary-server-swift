@@ -33,16 +33,12 @@ app.post("frameworks") { req -> Response in
         return Response(status: .badRequest, body: "没有上传文件\n")
     }
     
-    
-    let data = Data(buffer: file.data)
-    let md5 = Insecure.MD5.hash(data: data).hexEncodedString()
-    guard framework.md5 == nil || framework.md5 == md5 else {
-        return Response(status: .badRequest, body: Response.Body(string: "md5值不符 \(md5)\n"))
+    guard framework.isMD5Validated else {
+        return Response(status: .badRequest, body: Response.Body(string: "md5值不符\n"))
     }
     
-    let sha = Insecure.SHA1.hash(data: data).hexEncodedString()
-    guard framework.sha == nil || framework.sha == sha else {
-        return Response(status: .badRequest, body: Response.Body(string: "sha值不符 \(sha)\n"))
+    guard framework.isSHAValidated else {
+        return Response(status: .badRequest, body: Response.Body(string: "sha值不符\n"))
     }
     
     
