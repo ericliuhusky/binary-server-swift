@@ -17,8 +17,7 @@ app.routes.defaultMaxBodySize = "3gb"
 app.post("frameworks") { req -> Response in
     let framework = try req.content.decode(Framework.self)
     
-    if let _ = try await req.framework.findOne(["name": .string(framework.name),
-                                                  "version": .string(framework.version)]) {
+    if try await req.framework.contains(framework) {
         return Response(status: .conflict, body: Response.Body(string: "二进制文件已存在 \(framework.name) (\(framework.version))\n"))
     }
     
@@ -96,8 +95,7 @@ app.get("frameworks", ":name", ":version", "zip") { req -> Response in
         return Response(status: .badRequest, body: "")
     }
     
-    if try await req.framework.findOne(["name": .string(name),
-                                                  "version": .string(version)]) == nil {
+    if try await !req.framework.contains(name: name, version: version) {
         return Response(status: .notFound, body: Response.Body(string: "无二进制文件 \(name) (\(version))\n"))
     }
     
@@ -123,8 +121,7 @@ app.delete("frameworks", ":name", ":version") { req -> Response in
         return Response(status: .badRequest, body: "")
     }
     
-    if try await req.framework.findOne(["name": .string(name),
-                                                  "version": .string(version)]) == nil {
+    if try await !req.framework.contains(name: name, version: version) {
         return Response(status: .notFound, body: Response.Body(string: "无二进制文件 \(name) (\(version))\n"))
     }
     
