@@ -54,7 +54,7 @@ extension Request {
                           "version": .string(version)]
             } else {
                 let names = name.split(separator: ",").map { BSON.string(String($0)) }
-                filter = ["name": .array(names)]
+                filter = ["name": ["$in": .array(names)]]
             }
         }
         return try await frameworkCollection.find(filter).toArray()
