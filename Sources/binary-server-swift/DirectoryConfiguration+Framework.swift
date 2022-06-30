@@ -9,7 +9,9 @@ import Vapor
 
 extension DirectoryConfiguration {
     var frameworkDirectory: String {
-        URL(fileURLWithPath: app.directory.workingDirectory).appendingPathComponent(".binary").path
+        URL(fileURLWithPath: app.directory.workingDirectory)
+            .appendingPathComponent(frameworkDirectoryName)
+            .path
     }
     
     func directory(_ framework: Framework) -> String {

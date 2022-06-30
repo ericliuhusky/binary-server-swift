@@ -10,7 +10,7 @@ import MongoDBVapor
 
 extension Request {
     var frameworkCollection: MongoCollection<Framework> {
-        application.mongoDB.client.db("binary_database").collection("components", withType: Framework.self)
+        application.mongoDB.client.db(frameworkDatabaseName).collection(frameworkCollectionName, withType: Framework.self)
     }
     
     func addFramework() async throws -> Response {
