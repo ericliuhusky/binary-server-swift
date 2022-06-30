@@ -11,7 +11,7 @@ defer {
     app.shutdown()
 }
 
-configure(app)
+Config.configure(app)
 
 frameworkAPIRoutes(app)
 
