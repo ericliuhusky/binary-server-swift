@@ -23,6 +23,7 @@ let package = Package(
             ]),
         .testTarget(
             name: "binary-server-swiftTests",
-            dependencies: ["binary-server-swift"]),
+            dependencies: [.target(name: "binary-server-swift"),
+                           .product(name: "XCTVapor", package: "vapor")]),
     ]
 )
