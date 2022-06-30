@@ -13,7 +13,7 @@ extension Request {
         application.mongoDB.client.db(frameworkDatabaseName).collection(frameworkCollectionName, withType: Framework.self)
     }
     
-    func addFramework() async throws -> Response {
+    func addFramework(_ app: Application) async throws -> Response {
         let framework = try content.decode(Framework.self)
         
         if try await frameworkCollection.contains(framework) {
@@ -60,7 +60,7 @@ extension Request {
         return try await frameworkCollection.find(filter).toArray()
     }
     
-    func downloadFramework() async throws -> Response {
+    func downloadFramework(_ app: Application) async throws -> Response {
         guard
             let name = parameters.get("name"),
             let version = parameters.get("version")
@@ -82,7 +82,7 @@ extension Request {
         return fileio.streamFile(at: path)
     }
     
-    func deleteFramework() async throws -> Response {
+    func deleteFramework(_ app: Application) async throws -> Response {
         guard
             let name = parameters.get("name"),
             let version = parameters.get("version")
