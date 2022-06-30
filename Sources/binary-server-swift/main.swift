@@ -11,7 +11,7 @@ defer {
     app.shutdown()
 }
 
-app.routes.defaultMaxBodySize = "3gb"
+configure(app)
 
 frameworkAPIRoutes(app)
 

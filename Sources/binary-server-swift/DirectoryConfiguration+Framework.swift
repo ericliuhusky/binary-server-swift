@@ -10,7 +10,7 @@ import Vapor
 extension DirectoryConfiguration {
     var frameworkDirectory: String {
         URL(fileURLWithPath: workingDirectory)
-            .appendingPathComponent(frameworkDirectoryName)
+            .appendingPathComponent(directoryName)
             .path
     }
     
