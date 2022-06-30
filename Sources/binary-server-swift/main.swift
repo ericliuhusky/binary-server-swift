@@ -12,41 +12,14 @@ defer {
 }
 
 app.routes.defaultMaxBodySize = "3gb"
-app.post("frameworks") { req in
-    try await req.addFramework()
-}
 
-app.get("") { req -> String in
+frameworkAPIRoutes(app)
+
+app.get { req -> String in
     let frameworks = try await req.findFrameworks()
     return try show(frameworks)
 }
 
-app.get("frameworks") { req -> String in
-    let frameworks = try await req.findFrameworks()
-    return try show(frameworks)
-}
-
-app.get("frameworks", ":name") { req -> String in
-    let frameworks = try await req.findFrameworks()
-    return try show(frameworks)
-}
-
-app.get("frameworks", ":name", ":version") { req -> String in
-    let frameworks = try await req.findFrameworks()
-    return try show(frameworks)
-}
-
-app.get("frameworks", ":name", ":version", "zip") { req -> Response in
-    try await req.downloadFramework()
-}
-
-app.get("frameworks", ":name", ":version", ".tgz") { req in
-    try await req.downloadFramework()
-}
-
-app.delete("frameworks", ":name", ":version") { req -> Response in
-    try await req.deleteFramework()
-}
 
 try app.run()
 
